@@ -77,6 +77,24 @@ Há `manifest.json` em `public/` para facilitar instalação futura no dispositi
 
 O pacote **`bcrypt`** usa binários nativos; em alojamento partilhado o `npm install` pode não gerar o módulo certo para a plataforma. Este projeto usa **`bcryptjs`** (JavaScript puro), compatível com hashes `$2a$` / `$2b$` existentes na base.
 
+### Erro Prisma «Authentication failed … credentials … are not valid» (Hostinger)
+
+O Node está a ligar ao MySQL com **`DATABASE_URL`** errada para o servidor:
+
+1. No **hPanel → Databases → MySQL**, abre o utilizador **`u494944867_vitorduarteebb`** (confirma o nome **exactamente** como lá aparece).
+2. **Redefine a palavra-passe** desse utilizador e grava.
+3. Monta outra vez o URL (sem espaços, sem aspas):
+
+   `mysql://UTILIZADOR_EXACTO:SENHA_ENCODIDA@localhost:3306/NOME_DA_BASE`
+
+   • Cada **`@`** dentro da senha deve ser **`%40`** (uma vez só — não codificar duas vezes).  
+   • Outros caracteres especiais também podem precisar de encoding na URL.
+
+4. Cola em **Environment variables → DATABASE_URL** na app Node e **guarda**.
+5. **Reinicia / redeploy** da app.
+
+Confirma também que o **nome da base** é **`u494944867_horyzonn`** como no painel. Abre **`/api/health`**: se devolver erro de autenticação, o problema é só esta URL até ficar igual ao utilizador MySQL real.
+
 ### Erro `Unknown authentication plugin 'sha256_password'`
 
 O cliente Node usado pelo Prisma não suporta o plugin legado `sha256_password`. No MySQL 8, prefira **`caching_sha2_password`** (predefinição) ou **`mysql_native_password`** para o utilizador da aplicação:

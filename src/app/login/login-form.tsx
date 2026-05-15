@@ -20,7 +20,7 @@ function signInMessage(res: Awaited<ReturnType<typeof signIn>>) {
     return "Configuração do NextAuth: confirma na Hostinger NEXTAUTH_URL (ou AUTH_URL) e NEXTAUTH_SECRET (ou AUTH_SECRET) — o URL tem de ser exatamente o do site, em https, sem barra no fim.";
   if (code === "AccessDenied") return "Acesso recusado.";
   if (code === "CredentialsSignin")
-    return "E-mail/senha incorretos ou base de dados inacessível. Abre /api/health no browser: se database false, a DATABASE_URL no servidor está errada.";
+    return "Credenciais da base incorretas ou e-mail/senha errados. Na Hostinger: em Variáveis de ambiente, a DATABASE_URL tem de usar o MESMO utilizador e palavra-passe que em «Databases → MySQL» (senha com @ → %40 na URL). Redefine a senha MySQL no painel e cola de novo na DATABASE_URL. Teste: /api/health.";
   return `Não foi possível entrar${code ? ` (${code})` : ""}.`;
 }
 
