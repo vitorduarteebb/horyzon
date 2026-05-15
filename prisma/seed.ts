@@ -13,7 +13,14 @@ import {
 } from "@prisma/client";
 import bcrypt from "bcryptjs";
 
-const prisma = new PrismaClient();
+import { resolveDatabaseUrl } from "../src/lib/database-url";
+
+const databaseUrl = resolveDatabaseUrl();
+process.env.DATABASE_URL = databaseUrl;
+
+const prisma = new PrismaClient({
+  datasources: { db: { url: databaseUrl } },
+});
 
 function hash(password: string) {
   return bcrypt.hashSync(password, 12);

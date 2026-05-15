@@ -95,6 +95,8 @@ O Node está a ligar ao MySQL com **`DATABASE_URL`** errada para o servidor:
 
 Confirma também que o **nome da base** é **`u494944867_horyzonn`** como no painel. Abre **`/api/health`**: se devolver erro de autenticação, o problema é só esta URL até ficar igual ao utilizador MySQL real.
 
+**Montagem automática da URL (sem `%40` manual):** nas env vars da app Node define `DATABASE_USE_COMPONENTS=true`, `DATABASE_USER`, `DATABASE_PASSWORD` (senha **exactamente** como no painel, pode ter `@`), `DATABASE_NAME`, `DATABASE_HOST` (ex.: `localhost`) e opcionalmente `DATABASE_PORT`. Remove ou esvazia `DATABASE_URL` para não misturar. Reinicia a app.
+
 ### Erro `Unknown authentication plugin 'sha256_password'`
 
 O cliente Node usado pelo Prisma não suporta o plugin legado `sha256_password`. No MySQL 8, prefira **`caching_sha2_password`** (predefinição) ou **`mysql_native_password`** para o utilizador da aplicação:
