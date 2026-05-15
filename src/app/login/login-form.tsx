@@ -87,53 +87,61 @@ export function LoginForm() {
 
         <Card className="rounded-3xl border-2 shadow-lg">
           <CardHeader className="pb-0" />
-          <CardContent className="space-y-5">
-            <div className="space-y-2">
-              <span className="text-sm font-medium leading-none" id="email-label">
-                E-mail
-              </span>
-              <input
-                ref={emailRef}
-                type="text"
-                inputMode="email"
-                autoComplete="username email"
-                aria-labelledby="email-label"
-                aria-invalid={errors.email ? true : undefined}
-                className={cn(loginInputClass, errors.email && "border-destructive")}
-                onKeyDown={(e) => e.key === "Enter" && handleEntrar()}
-              />
-              {errors.email ? <p className="text-xs text-destructive">{errors.email}</p> : null}
-            </div>
-            <div className="space-y-2">
-              <span className="text-sm font-medium leading-none" id="password-label">
-                Senha
-              </span>
-              <input
-                ref={passwordRef}
-                type="password"
-                autoComplete="current-password"
-                aria-labelledby="password-label"
-                aria-invalid={errors.password ? true : undefined}
-                className={cn(loginInputClass, errors.password && "border-destructive")}
-                onKeyDown={(e) => e.key === "Enter" && handleEntrar()}
-              />
-              {errors.password ? (
-                <p className="text-xs text-destructive">{errors.password}</p>
-              ) : null}
-            </div>
-            {error ? (
-              <p className="text-sm font-medium text-destructive" role="alert">
-                {error}
-              </p>
-            ) : null}
-            <Button
-              type="button"
-              disabled={loading}
-              className={cn("h-12 w-full rounded-2xl text-base font-semibold")}
-              onClick={handleEntrar}
+          <CardContent>
+            <form
+              noValidate
+              className="space-y-5"
+              onSubmit={(e) => {
+                e.preventDefault();
+                void handleEntrar();
+              }}
             >
-              {loading ? "Entrando…" : "Entrar"}
-            </Button>
+              <div className="space-y-2">
+                <label htmlFor="login-email" className="text-sm font-medium leading-none">
+                  E-mail
+                </label>
+                <input
+                  id="login-email"
+                  ref={emailRef}
+                  name="email"
+                  type="text"
+                  inputMode="email"
+                  autoComplete="username email"
+                  aria-invalid={errors.email ? true : undefined}
+                  className={cn(loginInputClass, errors.email && "border-destructive")}
+                />
+                {errors.email ? <p className="text-xs text-destructive">{errors.email}</p> : null}
+              </div>
+              <div className="space-y-2">
+                <label htmlFor="login-password" className="text-sm font-medium leading-none">
+                  Senha
+                </label>
+                <input
+                  id="login-password"
+                  ref={passwordRef}
+                  name="password"
+                  type="password"
+                  autoComplete="current-password"
+                  aria-invalid={errors.password ? true : undefined}
+                  className={cn(loginInputClass, errors.password && "border-destructive")}
+                />
+                {errors.password ? (
+                  <p className="text-xs text-destructive">{errors.password}</p>
+                ) : null}
+              </div>
+              {error ? (
+                <p className="text-sm font-medium text-destructive" role="alert">
+                  {error}
+                </p>
+              ) : null}
+              <Button
+                type="submit"
+                disabled={loading}
+                className={cn("h-12 w-full rounded-2xl text-base font-semibold")}
+              >
+                {loading ? "Entrando…" : "Entrar"}
+              </Button>
+            </form>
           </CardContent>
         </Card>
         <p className="text-center text-xs text-muted-foreground">
@@ -141,7 +149,7 @@ export function LoginForm() {
           <a className="underline text-primary" href="/api/health">
             /api/health
           </a>
-          <span className="mt-1 block opacity-70">Login v4 · sem middleware Edge</span>
+          <span className="mt-1 block opacity-70">Login v5 · form sem validação HTML (noValidate)</span>
         </p>
       </div>
     </div>
