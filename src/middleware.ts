@@ -3,6 +3,8 @@ import { NextResponse } from "next/server";
 
 import type { NextRequest } from "next/server";
 
+import { getAuthSecret } from "@/lib/auth-secret";
+
 const LOGIN = "/login";
 
 export async function middleware(request: NextRequest) {
@@ -10,6 +12,7 @@ export async function middleware(request: NextRequest) {
 
   if (
     pathname.startsWith("/api/auth") ||
+    pathname.startsWith("/api/health") ||
     pathname.startsWith("/_next") ||
     pathname === "/favicon.ico" ||
     pathname === "/manifest.json" ||
@@ -20,7 +23,7 @@ export async function middleware(request: NextRequest) {
 
   const token = await getToken({
     req: request,
-    secret: process.env.NEXTAUTH_SECRET,
+    secret: getAuthSecret(),
   });
 
   const isLoggedIn = !!token;
