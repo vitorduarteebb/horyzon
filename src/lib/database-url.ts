@@ -11,6 +11,19 @@
  *   DATABASE_PASSWORD_BASE64=SGxvcnk=   (echo -n 'Blade1411@20' | base64 no Linux/Mac)
  */
 
+export function effectiveMysqlHost(rawFromEnv: string | undefined): string {
+  const trimmed = (rawFromEnv ?? "").trim();
+  const host = trimmed || "localhost";
+  if (process.env.NODE_ENV !== "production") {
+    return trimmed || "localhost";
+  }
+  /** Em Linux, `localhost` pode usar socket Unix; Prisma/Node em PaaS usa TCP — 127.0.0.1 força TCP. */
+  if (host === "localhost" || host === "::1") {
+    return "127.0.0.1";
+  }
+  return host;
+}
+
 export function parseUseComponentsFlag(): boolean {
   const v = process.env.DATABASE_USE_COMPONENTS?.trim().toLowerCase();
   return v === "1" || v === "true" || v === "yes";
@@ -19,7 +32,8 @@ export function parseUseComponentsFlag(): boolean {
 /** Informação não-secreta para diagnóstico (comprimento da senha, etc.). */
 export function databaseConnectionProbe(): {
   useComponents: boolean;
-  host?: string;
+  hostEnv?: string;
+  hostEffective: string;
   user?: string;
   database?: string;
   port?: string;
@@ -35,7 +49,8 @@ export function databaseConnectionProbe(): {
 
   return {
     useComponents: parseUseComponentsFlag(),
-    host: process.env.DATABASE_HOST?.trim(),
+    hostEnv: process.env.DATABASE_HOST?.trim() || undefined,
+    hostEffective: effectiveMysqlHost(process.env.DATABASE_HOST),
     user: process.env.DATABASE_USER?.trim(),
     database: process.env.DATABASE_NAME?.trim(),
     port: process.env.DATABASE_PORT?.trim(),
@@ -53,7 +68,7 @@ export function resolveDatabaseUrl(): string {
   if (useParts) {
     const user = process.env.DATABASE_USER?.trim();
     const database = process.env.DATABASE_NAME?.trim();
-    const host = process.env.DATABASE_HOST?.trim() || "localhost";
+    const host = effectiveMysqlHost(process.env.DATABASE_HOST);
     const port = process.env.DATABASE_PORT?.trim() || "3306";
 
     let password = "";
