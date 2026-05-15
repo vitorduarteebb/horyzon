@@ -29,6 +29,15 @@ export function parseUseComponentsFlag(): boolean {
   return v === "1" || v === "true" || v === "yes";
 }
 
+/**
+ * Evita esperas TCP muito longas (nginx devolve 504 antes do cliente Prisma desistir).
+ * Parâmetros aceites pelo conector MySQL do Prisma — ver documentação "Connection URLs".
+ */
+function withMysqlConnectTimeout(url: string): string {
+  if (/[?&]connect_timeout=/.test(url)) return url;
+  return url.includes("?") ? `${url}&connect_timeout=12` : `${url}?connect_timeout=12`;
+}
+
 /** Informação não-secreta para diagnóstico (comprimento da senha, etc.). */
 export function databaseConnectionProbe(): {
   useComponents: boolean;
@@ -89,7 +98,9 @@ export function resolveDatabaseUrl(): string {
       );
     }
 
-    return `mysql://${encodeURIComponent(user)}:${encodeURIComponent(password)}@${host}:${port}/${database}`;
+    return withMysqlConnectTimeout(
+      `mysql://${encodeURIComponent(user)}:${encodeURIComponent(password)}@${host}:${port}/${database}`
+    );
   }
 
   const url = process.env.DATABASE_URL?.trim();
@@ -98,5 +109,5 @@ export function resolveDatabaseUrl(): string {
       "Defina DATABASE_URL ou DATABASE_USE_COMPONENTS=true com DATABASE_USER, DATABASE_PASSWORD e DATABASE_NAME."
     );
   }
-  return url;
+  return withMysqlConnectTimeout(url);
 }
