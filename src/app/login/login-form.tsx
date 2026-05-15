@@ -2,7 +2,7 @@
 
 import { useRef, useState } from "react";
 import { signIn } from "next-auth/react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -24,9 +24,15 @@ function signInMessage(res: Awaited<ReturnType<typeof signIn>>) {
   return `Não foi possível entrar${code ? ` (${code})` : ""}.`;
 }
 
+/** Destino seguro para evitar open redirect (`//evil`). */
+function safePostLoginRedirect(callbackUrl: string | null): string {
+  const raw = callbackUrl?.trim();
+  if (!raw || !raw.startsWith("/") || raw.startsWith("//")) return "/dashboard";
+  return raw;
+}
+
 /** Cliente — deve ficar dentro de `<Suspense>` (useSearchParams). */
 export function LoginForm() {
-  const router = useRouter();
   const params = useSearchParams();
   const emailRef = useRef<HTMLInputElement>(null);
   const passwordRef = useRef<HTMLInputElement>(null);
@@ -56,22 +62,30 @@ export function LoginForm() {
     }
 
     setLoading(true);
-    const res = await signIn("credentials", {
-      email: parsed.data.email,
-      password: parsed.data.password,
-      redirect: false,
-    });
-    setLoading(false);
+    try {
+      const res = await signIn("credentials", {
+        email: parsed.data.email,
+        password: parsed.data.password,
+        redirect: false,
+      });
 
-    const msg = signInMessage(res);
-    if (msg) {
-      setError(msg);
-      return;
+      const msg = signInMessage(res);
+      if (msg) {
+        setError(msg);
+        return;
+      }
+
+      /**
+       * Hard navigation: evita corrida onde `router.refresh()` reexecuta `/login` antes do
+       * cookie de sessão ser enviado ao RSC de `/dashboard` (voltava sempre ao login como “refresh”).
+       */
+      const dest = safePostLoginRedirect(params.get("callbackUrl"));
+      window.location.assign(dest);
+    } catch {
+      setError("Erro ao contactar o servidor de sessões. Actualiza a página e tenta de novo.");
+    } finally {
+      setLoading(false);
     }
-
-    const cb = params.get("callbackUrl") ?? "/dashboard";
-    router.push(cb);
-    router.refresh();
   }
 
   return (
