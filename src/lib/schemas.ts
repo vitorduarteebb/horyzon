@@ -13,11 +13,11 @@ import {
 
 export const loginSchema = z.object({
   email: z
-    .string({ required_error: "Informe o e-mail" })
+    .string()
     .min(1, "Informe o e-mail")
     .email("E-mail inválido")
     .transform((s) => s.trim().toLowerCase()),
-  password: z.string({ required_error: "Informe a senha" }).min(1, "Informe a senha"),
+  password: z.string().min(1, "Informe a senha"),
 });
 
 export const leadSchema = z.object({

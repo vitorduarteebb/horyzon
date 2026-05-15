@@ -1,11 +1,9 @@
 "use client";
 
+import type { FormEvent } from "react";
 import { Suspense, useState } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import type { z } from "zod";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -19,21 +17,40 @@ function LoginFormInner() {
   const params = useSearchParams();
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
 
-  const form = useForm<z.infer<typeof loginSchema>>({
-    resolver: zodResolver(loginSchema),
-    defaultValues: { email: "", password: "" },
-  });
-
-  const onSubmit = form.handleSubmit(async (values) => {
-    setLoading(true);
+  async function onSubmit(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setErrors({});
     setError(null);
+
+    const form = e.currentTarget;
+    const fd = new FormData(form);
+    const rawEmail = typeof fd.get("email") === "string" ? (fd.get("email") as string) : "";
+    const rawPassword = typeof fd.get("password") === "string" ? (fd.get("password") as string) : "";
+
+    const parsed = loginSchema.safeParse({
+      email: rawEmail.trim(),
+      password: rawPassword,
+    });
+
+    if (!parsed.success) {
+      const flattened = parsed.error.flatten();
+      const fieldErrors: { email?: string; password?: string } = {};
+      if (flattened.fieldErrors.email?.[0]) fieldErrors.email = flattened.fieldErrors.email[0];
+      if (flattened.fieldErrors.password?.[0]) fieldErrors.password = flattened.fieldErrors.password[0];
+      setErrors(fieldErrors);
+      return;
+    }
+
+    setLoading(true);
     const res = await signIn("credentials", {
-      email: values.email,
-      password: values.password,
+      email: parsed.data.email,
+      password: parsed.data.password,
       redirect: false,
     });
     setLoading(false);
+
     if (res?.error) {
       setError("E-mail ou senha incorretos.");
       return;
@@ -41,7 +58,7 @@ function LoginFormInner() {
     const cb = params.get("callbackUrl") ?? "/dashboard";
     router.push(cb);
     router.refresh();
-  });
+  }
 
   return (
     <div className="min-h-dvh flex items-center justify-center bg-[var(--hz-app-bg)] px-4 py-10">
@@ -62,29 +79,31 @@ function LoginFormInner() {
                 <Label htmlFor="email">E-mail</Label>
                 <Input
                   id="email"
-                  type="email"
+                  name="email"
+                  type="text"
                   inputMode="email"
-                  autoComplete="email"
+                  autoComplete="username email"
                   className="h-12 rounded-xl"
-                  aria-invalid={!!form.formState.errors.email}
-                  {...form.register("email")}
+                  aria-invalid={!!errors.email}
+                  defaultValue=""
                 />
-                {form.formState.errors.email ? (
-                  <p className="text-xs text-destructive">{form.formState.errors.email.message}</p>
+                {errors.email ? (
+                  <p className="text-xs text-destructive">{errors.email}</p>
                 ) : null}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="password">Senha</Label>
                 <Input
                   id="password"
+                  name="password"
                   type="password"
                   autoComplete="current-password"
                   className="h-12 rounded-xl"
-                  aria-invalid={!!form.formState.errors.password}
-                  {...form.register("password")}
+                  aria-invalid={!!errors.password}
+                  defaultValue=""
                 />
-                {form.formState.errors.password ? (
-                  <p className="text-xs text-destructive">{form.formState.errors.password.message}</p>
+                {errors.password ? (
+                  <p className="text-xs text-destructive">{errors.password}</p>
                 ) : null}
               </div>
               {error ? (
