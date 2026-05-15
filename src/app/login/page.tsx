@@ -57,14 +57,16 @@ function LoginFormInner() {
         <Card className="rounded-3xl border-2 shadow-lg">
           <CardHeader className="pb-0" />
           <CardContent>
-            <form onSubmit={onSubmit} className="space-y-5">
+            <form noValidate onSubmit={onSubmit} className="space-y-5">
               <div className="space-y-2">
                 <Label htmlFor="email">E-mail</Label>
                 <Input
                   id="email"
                   type="email"
+                  inputMode="email"
                   autoComplete="email"
                   className="h-12 rounded-xl"
+                  aria-invalid={!!form.formState.errors.email}
                   {...form.register("email")}
                 />
                 {form.formState.errors.email ? (
@@ -78,8 +80,12 @@ function LoginFormInner() {
                   type="password"
                   autoComplete="current-password"
                   className="h-12 rounded-xl"
+                  aria-invalid={!!form.formState.errors.password}
                   {...form.register("password")}
                 />
+                {form.formState.errors.password ? (
+                  <p className="text-xs text-destructive">{form.formState.errors.password.message}</p>
+                ) : null}
               </div>
               {error ? (
                 <p className="text-sm font-medium text-destructive" role="alert">

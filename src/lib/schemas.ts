@@ -12,8 +12,12 @@ import {
 } from "@prisma/client";
 
 export const loginSchema = z.object({
-  email: z.string().email("E-mail inválido"),
-  password: z.string().min(1, "Informe a senha"),
+  email: z
+    .string({ required_error: "Informe o e-mail" })
+    .min(1, "Informe o e-mail")
+    .email("E-mail inválido")
+    .transform((s) => s.trim().toLowerCase()),
+  password: z.string({ required_error: "Informe a senha" }).min(1, "Informe a senha"),
 });
 
 export const leadSchema = z.object({
