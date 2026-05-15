@@ -32,14 +32,19 @@ export async function middleware(request: NextRequest) {
     if (isLoggedIn) {
       return NextResponse.redirect(new URL("/dashboard", request.url));
     }
-    return NextResponse.next();
+    const res = NextResponse.next();
+    res.headers.set("Cache-Control", "private, no-store, max-age=0, must-revalidate");
+    res.headers.set("Pragma", "no-cache");
+    return res;
   }
 
   if (!isLoggedIn) {
     const url = request.nextUrl.clone();
     url.pathname = LOGIN;
     url.searchParams.set("callbackUrl", pathname);
-    return NextResponse.redirect(url);
+    const redirectRes = NextResponse.redirect(url);
+    redirectRes.headers.set("Cache-Control", "private, no-store, max-age=0, must-revalidate");
+    return redirectRes;
   }
 
   return NextResponse.next();
