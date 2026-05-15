@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import { redirect } from "next/navigation";
 
-import { auth } from "@/auth";
+import { authSafe } from "@/lib/auth-safe";
 
 import { LoginForm } from "./login-form";
 
@@ -9,7 +9,7 @@ export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 export default async function LoginPage() {
-  const session = await auth();
+  const session = await authSafe();
   if (session?.user?.id) {
     redirect("/dashboard");
   }

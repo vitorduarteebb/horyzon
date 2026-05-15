@@ -11,8 +11,18 @@ import { Toaster } from "@/components/ui/sonner";
 
 const sans = Inter({ subsets: ["latin"], variable: "--font-sans" });
 
+function safeMetadataBase(): URL {
+  const raw = (process.env.NEXTAUTH_URL ?? process.env.AUTH_URL ?? "http://localhost:3000").trim();
+  try {
+    return new URL(raw);
+  } catch {
+    console.warn("[layout] NEXTAUTH_URL/AUTH_URL inválido — usando localhost como metadataBase.");
+    return new URL("http://localhost:3000");
+  }
+}
+
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXTAUTH_URL ?? "http://localhost:3000"),
+  metadataBase: safeMetadataBase(),
   title: "Horyzonn OS",
   description: "Sistema interno de operação · Horyzonn",
   manifest: "/manifest.json",
