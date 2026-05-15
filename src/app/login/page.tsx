@@ -1,168 +1,36 @@
-"use client";
+import { Suspense } from "react";
+import { redirect } from "next/navigation";
 
-import { Suspense, useRef, useState } from "react";
-import { signIn } from "next-auth/react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { auth } from "@/auth";
 
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { loginSchema } from "@/lib/schemas";
-import { cn } from "@/lib/utils";
+import { LoginForm } from "./login-form";
 
-const loginInputClass =
-  "flex h-12 w-full min-w-0 rounded-xl border border-input bg-transparent px-3 py-2 text-base outline-none transition-colors placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50 md:text-sm dark:bg-input/30";
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
-function signInMessage(res: Awaited<ReturnType<typeof signIn>>) {
-  if (!res) return "Sem resposta do servidor. Tenta de novo.";
-  if (res.ok) return null;
-  const code = res.error;
-  if (code === "Configuration")
-    return "Configuração do NextAuth: confirma na Hostinger NEXTAUTH_URL (ou AUTH_URL) e NEXTAUTH_SECRET (ou AUTH_SECRET) — o URL tem de ser exatamente o do site, em https, sem barra no fim.";
-  if (code === "AccessDenied") return "Acesso recusado.";
-  if (code === "CredentialsSignin")
-    return "E-mail/senha incorretos ou base de dados inacessível. Abre /api/health no browser: se database false, a DATABASE_URL no servidor está errada.";
-  return `Não foi possível entrar${code ? ` (${code})` : ""}.`;
-}
-
-function LoginFormInner() {
-  const router = useRouter();
-  const params = useSearchParams();
-  const emailRef = useRef<HTMLInputElement>(null);
-  const passwordRef = useRef<HTMLInputElement>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
-
-  async function handleEntrar() {
-    setErrors({});
-    setError(null);
-
-    const rawEmail = emailRef.current?.value ?? "";
-    const rawPassword = passwordRef.current?.value ?? "";
-
-    const parsed = loginSchema.safeParse({
-      email: rawEmail.trim(),
-      password: rawPassword,
-    });
-
-    if (!parsed.success) {
-      const flat = parsed.error.flatten();
-      setErrors({
-        email: flat.fieldErrors.email?.[0],
-        password: flat.fieldErrors.password?.[0],
-      });
-      return;
-    }
-
-    setLoading(true);
-    const res = await signIn("credentials", {
-      email: parsed.data.email,
-      password: parsed.data.password,
-      redirect: false,
-    });
-    setLoading(false);
-
-    const msg = signInMessage(res);
-    if (msg) {
-      setError(msg);
-      return;
-    }
-
-    const cb = params.get("callbackUrl") ?? "/dashboard";
-    router.push(cb);
-    router.refresh();
+export default async function LoginPage() {
+  const session = await auth();
+  if (session?.user?.id) {
+    redirect("/dashboard");
   }
 
   return (
-    <div className="min-h-dvh flex items-center justify-center bg-[var(--hz-app-bg)] px-4 py-10">
-      <div className="w-full max-w-md space-y-8">
-        <div className="text-center space-y-2">
-          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-primary text-primary-foreground text-lg font-black">
-            HZ
-          </div>
-          <h1 className="text-3xl font-bold tracking-tight">Horyzonn OS</h1>
-          <p className="text-sm text-muted-foreground">Entre com o e-mail corporativo</p>
-        </div>
-
-        <Card className="rounded-3xl border-2 shadow-lg">
-          <CardHeader className="pb-0" />
-          <CardContent className="space-y-5">
-            {/*
-              Sem <form>: evita validação nativa / extensões que injetam "Required".
-              Enter no teclado: keydown no último campo também dispara entrar.
-            */}
-            <div className="space-y-2">
-              <span className="text-sm font-medium leading-none" id="email-label">
-                E-mail
-              </span>
-              <input
-                ref={emailRef}
-                type="text"
-                inputMode="email"
-                autoComplete="username email"
-                aria-labelledby="email-label"
-                aria-invalid={errors.email ? true : undefined}
-                className={cn(loginInputClass, errors.email && "border-destructive")}
-                onKeyDown={(e) => e.key === "Enter" && handleEntrar()}
-              />
-              {errors.email ? <p className="text-xs text-destructive">{errors.email}</p> : null}
-            </div>
-            <div className="space-y-2">
-              <span className="text-sm font-medium leading-none" id="password-label">
-                Senha
-              </span>
-              <input
-                ref={passwordRef}
-                type="password"
-                autoComplete="current-password"
-                aria-labelledby="password-label"
-                aria-invalid={errors.password ? true : undefined}
-                className={cn(loginInputClass, errors.password && "border-destructive")}
-                onKeyDown={(e) => e.key === "Enter" && handleEntrar()}
-              />
-              {errors.password ? (
-                <p className="text-xs text-destructive">{errors.password}</p>
-              ) : null}
-            </div>
-            {error ? (
-              <p className="text-sm font-medium text-destructive" role="alert">
-                {error}
-              </p>
-            ) : null}
-            <Button
-              type="button"
-              disabled={loading}
-              className={cn("h-12 w-full rounded-2xl text-base font-semibold")}
-              onClick={handleEntrar}
-            >
-              {loading ? "Entrando…" : "Entrar"}
-            </Button>
-          </CardContent>
-        </Card>
-        <p className="text-center text-xs text-muted-foreground">
-          Uso interno Horyzonn · Teste BD:{" "}
-          <a className="underline text-primary" href="/api/health">
-            /api/health
-          </a>
-          <span className="mt-1 block opacity-70">Login v3 (sem form · AUTH_SECRET unificado)</span>
-        </p>
+    <>
+      <div className="border-b-2 border-amber-600 bg-amber-400 px-3 py-2 text-center text-xs font-bold leading-snug text-amber-950 md:text-sm">
+        Deploy vivo · UTC {new Date().toISOString()}
+        <span className="mt-1 block font-normal">
+          Faixa âmbar = HTML gerado no servidor. Se não vês isto, o deploy/CDN ainda está antigo.
+        </span>
       </div>
-    </div>
-  );
-}
-
-function LoginFallback() {
-  return (
-    <div className="min-h-dvh flex items-center justify-center bg-[var(--hz-app-bg)] px-4">
-      <p className="text-sm text-muted-foreground">Carregando…</p>
-    </div>
-  );
-}
-
-export default function LoginPage() {
-  return (
-    <Suspense fallback={<LoginFallback />}>
-      <LoginFormInner />
-    </Suspense>
+      <Suspense
+        fallback={
+          <div className="flex min-h-[50vh] items-center justify-center text-sm text-muted-foreground">
+            Carregando…
+          </div>
+        }
+      >
+        <LoginForm />
+      </Suspense>
+    </>
   );
 }
