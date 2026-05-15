@@ -1,30 +1,72 @@
 /**
  * Ligação MySQL para o Prisma.
  *
- * Opção A — uma linha (atenção a `@` na senha → `%40` na URL):
- *   DATABASE_URL="mysql://user:pass@host:3306/db"
+ * Opção A — DATABASE_URL (senha com @ → %40 na URL).
  *
- * Opção B — variáveis separadas (senha em texto puro, encoding automático).
- * Na Hostinger costuma evitar erros ao montar o URL à mão:
+ * Opção B — componentes + encoding automático:
  *   DATABASE_USE_COMPONENTS=true
- *   DATABASE_USER=u494944867_vitorduarteebb
- *   DATABASE_PASSWORD=Blade1411@20
- *   DATABASE_NAME=u494944867_horyzonn
- *   DATABASE_HOST=localhost
- *   DATABASE_PORT=3306
+ *   DATABASE_USER, DATABASE_PASSWORD, DATABASE_NAME, DATABASE_HOST, DATABASE_PORT
+ *
+ * Opção C — se o painel cortar a senha no `@`, usa Base64 da senha exacta:
+ *   DATABASE_PASSWORD_BASE64=SGxvcnk=   (echo -n 'Blade1411@20' | base64 no Linux/Mac)
  */
 
+export function parseUseComponentsFlag(): boolean {
+  const v = process.env.DATABASE_USE_COMPONENTS?.trim().toLowerCase();
+  return v === "1" || v === "true" || v === "yes";
+}
+
+/** Informação não-secreta para diagnóstico (comprimento da senha, etc.). */
+export function databaseConnectionProbe(): {
+  useComponents: boolean;
+  host?: string;
+  user?: string;
+  database?: string;
+  port?: string;
+  passwordLength: number;
+  passwordHasAt: boolean;
+  usingPasswordBase64: boolean;
+} {
+  const pwB64 = process.env.DATABASE_PASSWORD_BASE64?.trim();
+  const pwPlain = process.env.DATABASE_PASSWORD ?? "";
+  const effectiveLen = pwB64
+    ? Buffer.from(pwB64, "base64").toString("utf8").length
+    : pwPlain.trimEnd().length;
+
+  return {
+    useComponents: parseUseComponentsFlag(),
+    host: process.env.DATABASE_HOST?.trim(),
+    user: process.env.DATABASE_USER?.trim(),
+    database: process.env.DATABASE_NAME?.trim(),
+    port: process.env.DATABASE_PORT?.trim(),
+    passwordLength: effectiveLen,
+    passwordHasAt: pwB64
+      ? Buffer.from(pwB64, "base64").toString("utf8").includes("@")
+      : pwPlain.includes("@"),
+    usingPasswordBase64: Boolean(pwB64),
+  };
+}
+
 export function resolveDatabaseUrl(): string {
-  const useParts =
-    process.env.DATABASE_USE_COMPONENTS === "1" ||
-    process.env.DATABASE_USE_COMPONENTS === "true";
+  const useParts = parseUseComponentsFlag();
 
   if (useParts) {
     const user = process.env.DATABASE_USER?.trim();
-    const password = process.env.DATABASE_PASSWORD ?? "";
     const database = process.env.DATABASE_NAME?.trim();
     const host = process.env.DATABASE_HOST?.trim() || "localhost";
     const port = process.env.DATABASE_PORT?.trim() || "3306";
+
+    let password = "";
+    const b64 = process.env.DATABASE_PASSWORD_BASE64?.trim();
+    if (b64) {
+      try {
+        password = Buffer.from(b64, "base64").toString("utf8");
+      } catch {
+        throw new Error("DATABASE_PASSWORD_BASE64 inválido (não é Base64 válido).");
+      }
+    } else {
+      password = (process.env.DATABASE_PASSWORD ?? "").replace(/\r$/, "").trim();
+    }
 
     if (!user || !database) {
       throw new Error(

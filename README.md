@@ -97,6 +97,8 @@ Confirma também que o **nome da base** é **`u494944867_horyzonn`** como no pai
 
 **Montagem automática da URL (sem `%40` manual):** nas env vars da app Node define `DATABASE_USE_COMPONENTS=true`, `DATABASE_USER`, `DATABASE_PASSWORD` (senha **exactamente** como no painel, pode ter `@`), `DATABASE_NAME`, `DATABASE_HOST` (ex.: `localhost`) e opcionalmente `DATABASE_PORT`. Remove ou esvazia `DATABASE_URL` para não misturar. Reinicia a app.
 
+Se **continuar “Authentication failed”** com senha que contém `@`: alguns painéis cortam o valor — use **`DATABASE_PASSWORD_BASE64`** (Base64 UTF-8 da senha exacta; exemplo para `Blade1411@20`: `QmxhZGUxNDExQDIw`) ou altere a senha MySQL para **só letras e números**. Experimente também **`DATABASE_HOST=127.0.0.1`**. Abra **`/api/health`** e veja `connection.passwordLength` (para `Blade1411@20` deve ser **13**).
+
 ### Erro `Unknown authentication plugin 'sha256_password'`
 
 O cliente Node usado pelo Prisma não suporta o plugin legado `sha256_password`. No MySQL 8, prefira **`caching_sha2_password`** (predefinição) ou **`mysql_native_password`** para o utilizador da aplicação:
