@@ -1,0 +1,10 @@
+{
+  "name": "Horyzonn OS",
+  "short_name": "Horyzonn",
+  "start_url": "/dashboard",
+  "display": "standalone",
+  "background_color": "#f4fbf6",
+  "theme_color": "#0f766e",
+  "description": "Sistema interno · Horyzonn",
+  "icons": []
+}

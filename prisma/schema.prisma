@@ -1,0 +1,343 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  ADMIN
+  GUSTAVO
+  ANGEL
+  XAVIER
+}
+
+enum LeadTemperature {
+  COLD
+  WARM
+  HOT
+}
+
+enum LeadPipelineStatus {
+  NEW
+  QUALIFICATION
+  DIAGNOSIS
+  PROPOSAL
+  CLOSING
+  SCOPE
+  PRODUCTION
+  VALIDATION
+  FINAL_APPROVAL
+  DELIVERY
+  SUPPORT
+  CASE_STUDY
+  LOST
+}
+
+enum TaskStatus {
+  BACKLOG
+  TODO
+  IN_PROGRESS
+  BLOCKED
+  READY_FOR_QA
+  REJECTED
+  APPROVED
+  DONE
+}
+
+enum TaskPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum ProjectStatus {
+  PLANNING
+  ACTIVE
+  REVIEW
+  ON_HOLD
+  COMPLETED
+  CANCELLED
+}
+
+enum ProjectPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum QAItemStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum AgendaEventType {
+  MEETING
+  DELIVERY
+  FOLLOW_UP
+  INTERNAL_DEADLINE
+  OTHER
+}
+
+enum NotificationType {
+  INFO
+  WARNING
+  SUCCESS
+  DANGER
+}
+
+model User {
+  id           String   @id @default(cuid())
+  name         String
+  email        String   @unique
+  passwordHash String
+  role         UserRole
+  avatarUrl    String?
+  active       Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  ownedLeads    Lead[]        @relation("LeadOwner")
+  ownedProjects Project[]     @relation("ProjectOwner")
+  assignedTasks Task[]        @relation("TaskAssignee")
+  createdTasks  Task[]        @relation("TaskCreator")
+  agendaEvents  AgendaEvent[]
+  goals         Goal[]
+  libraryItems  LibraryItem[] @relation("LibraryAuthor")
+  notifications Notification[]
+  chatMessages  ChatMessage[]
+  qaAsTester    QAItem[]      @relation("QATester")
+  threadMembers ChatThreadMember[]
+}
+
+model Lead {
+  id          String             @id @default(cuid())
+  name        String
+  company     String
+  whatsapp    String
+  email       String?
+  source      String
+  temperature LeadTemperature
+  status      LeadPipelineStatus
+  ownerId     String
+  nextAction  String?
+  followUpAt  DateTime?
+  notes       String?            @db.Text
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+
+  owner User @relation("LeadOwner", fields: [ownerId], references: [id], onDelete: Restrict)
+
+  @@index([ownerId])
+  @@index([status])
+  @@index([followUpAt])
+}
+
+model Client {
+  id        String   @id @default(cuid())
+  name      String
+  company   String
+  whatsapp  String
+  email     String
+  status    String
+  notes     String?  @db.Text
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  projects     Project[]
+  tasks        Task[]
+  agendaEvents AgendaEvent[]
+}
+
+model Project {
+  id          String          @id @default(cuid())
+  title       String
+  clientId    String
+  ownerId     String
+  status      ProjectStatus
+  priority    ProjectPriority @default(MEDIUM)
+  value       Decimal?        @db.Decimal(14, 2)
+  deadline    DateTime?
+  progress    Int             @default(0)
+  nextAction  String?
+  risk        String?
+  description String?         @db.Text
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  client       Client        @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  owner        User          @relation("ProjectOwner", fields: [ownerId], references: [id], onDelete: Restrict)
+  tasks        Task[]
+  qaItems      QAItem[]
+  agendaEvents AgendaEvent[]
+  chatThreads  ChatThread[]
+
+  @@index([clientId])
+  @@index([ownerId])
+  @@index([status])
+  @@index([deadline])
+}
+
+model Task {
+  id            String        @id @default(cuid())
+  title         String
+  description   String?       @db.Text
+  projectId     String?
+  clientId      String?
+  assigneeId    String
+  createdById   String
+  status        TaskStatus    @default(BACKLOG)
+  priority      TaskPriority  @default(MEDIUM)
+  dueDate       DateTime?
+  nextAction    String?
+  impactedGoal  String?
+  completedAt   DateTime?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  project   Project? @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  client    Client?  @relation(fields: [clientId], references: [id], onDelete: SetNull)
+  assignee  User     @relation("TaskAssignee", fields: [assigneeId], references: [id], onDelete: Restrict)
+  createdBy User     @relation("TaskCreator", fields: [createdById], references: [id], onDelete: Restrict)
+  qaItem    QAItem?
+  chatThreads ChatThread[]
+
+  @@index([assigneeId])
+  @@index([projectId])
+  @@index([status])
+  @@index([dueDate])
+}
+
+model QAItem {
+  id         String       @id @default(cuid())
+  projectId  String
+  taskId     String?      @unique
+  testerId   String
+  status     QAItemStatus @default(PENDING)
+  title      String
+  notes      String?      @db.Text
+  testedAt   DateTime?
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  task    Task?   @relation(fields: [taskId], references: [id], onDelete: SetNull)
+  tester  User    @relation("QATester", fields: [testerId], references: [id], onDelete: Restrict)
+
+  @@index([projectId])
+  @@index([status])
+}
+
+model AgendaEvent {
+  id        String          @id @default(cuid())
+  title     String
+  type      AgendaEventType
+  userId    String
+  clientId  String?
+  projectId String?
+  startsAt  DateTime
+  endsAt    DateTime
+  notes     String?         @db.Text
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  client  Client?  @relation(fields: [clientId], references: [id], onDelete: SetNull)
+  project Project? @relation(fields: [projectId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([startsAt])
+}
+
+model ChatThread {
+  id        String   @id @default(cuid())
+  title     String
+  projectId String?
+  taskId    String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  project  Project? @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  task     Task?    @relation(fields: [taskId], references: [id], onDelete: SetNull)
+  messages ChatMessage[]
+  members  ChatThreadMember[]
+}
+
+model ChatThreadMember {
+  id         String    @id @default(cuid())
+  threadId   String
+  userId     String
+  lastReadAt DateTime?
+
+  thread ChatThread @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  user   User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([threadId, userId])
+  @@index([userId])
+}
+
+model ChatMessage {
+  id        String   @id @default(cuid())
+  threadId  String
+  senderId  String
+  content   String   @db.Text
+  createdAt DateTime @default(now())
+
+  thread ChatThread @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  sender User       @relation(fields: [senderId], references: [id], onDelete: Cascade)
+
+  @@index([threadId])
+  @@index([createdAt])
+}
+
+model Goal {
+  id        String    @id @default(cuid())
+  userId    String
+  title     String
+  target    Decimal   @db.Decimal(14, 2)
+  current   Decimal   @default(0) @db.Decimal(14, 2)
+  period    String
+  startsAt  DateTime
+  endsAt    DateTime
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model LibraryItem {
+  id          String   @id @default(cuid())
+  title       String
+  category    String
+  content     String   @db.Text
+  createdById String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  createdBy User @relation("LibraryAuthor", fields: [createdById], references: [id], onDelete: Restrict)
+
+  @@index([category])
+}
+
+model Notification {
+  id         String            @id @default(cuid())
+  userId     String
+  title      String
+  message    String            @db.Text
+  type       NotificationType
+  read       Boolean           @default(false)
+  entityType String?
+  entityId   String?
+  createdAt  DateTime          @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, read])
+}
