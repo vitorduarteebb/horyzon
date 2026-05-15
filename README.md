@@ -1,6 +1,6 @@
 # Horyzonn OS
 
-Sistema interno para operação da **Horyzonn**: leads, clientes, projetos, tarefas (kanban), QA, agenda, chat, metas, biblioteca e relatórios — com **MySQL + Prisma**, **NextAuth (Auth.js)** com e-mail/senha e **bcrypt**.
+Sistema interno para operação da **Horyzonn**: leads, clientes, projetos, tarefas (kanban), QA, agenda, chat, metas, biblioteca e relatórios — com **MySQL + Prisma**, **NextAuth (Auth.js)** com e-mail/senha e **bcryptjs** (puro JS, compatível com alojamento Linux sem compilar nativos).
 
 ## Requisitos
 
@@ -65,13 +65,17 @@ Acesse [http://localhost:3000](http://localhost:3000) e faça login com um dos u
 
 ## Stack
 
-Next.js 14 (App Router), TypeScript, Tailwind, shadcn/ui, lucide-react, Prisma 5, NextAuth v5 (beta), bcrypt, Zod, React Hook Form, date-fns, Recharts, `@hello-pangea/dnd`.
+Next.js 14 (App Router), TypeScript, Tailwind, shadcn/ui, lucide-react, Prisma 5, NextAuth v5 (beta), bcryptjs, Zod, React Hook Form, date-fns, Recharts, `@hello-pangea/dnd`.
 
 ## PWA
 
 Há `manifest.json` em `public/` para facilitar instalação futura no dispositivo ou empacotamento como app.
 
 ## Problemas comuns
+
+### Erro `No native build was found` com `bcrypt` em Linux/Node 22
+
+O pacote **`bcrypt`** usa binários nativos; em alojamento partilhado o `npm install` pode não gerar o módulo certo para a plataforma. Este projeto usa **`bcryptjs`** (JavaScript puro), compatível com hashes `$2a$` / `$2b$` existentes na base.
 
 ### Erro `Unknown authentication plugin 'sha256_password'`
 

@@ -1,6 +1,6 @@
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
-import bcrypt from "bcrypt";
+import bcrypt from "bcryptjs";
 import type { UserRole } from "@prisma/client";
 
 import { getAuthSecret } from "@/lib/auth-secret";
@@ -30,7 +30,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           });
           if (!user?.active) return null;
 
-          const ok = await bcrypt.compare(password, user.passwordHash);
+          const ok = bcrypt.compareSync(password, user.passwordHash);
           if (!ok) return null;
 
           return {
