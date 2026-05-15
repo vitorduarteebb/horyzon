@@ -7,10 +7,13 @@ import { useRouter, useSearchParams } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { loginSchema } from "@/lib/schemas";
 import { cn } from "@/lib/utils";
+
+/** `<input>` nativo + estas classes — evita UI de validação de libs no login. */
+const loginInputClass =
+  "flex h-12 w-full min-w-0 rounded-xl border border-input bg-transparent px-3 py-2 text-base outline-none transition-colors placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50 md:text-sm dark:bg-input/30";
 
 function LoginFormInner() {
   const router = useRouter();
@@ -77,14 +80,16 @@ function LoginFormInner() {
             <form noValidate onSubmit={onSubmit} className="space-y-5">
               <div className="space-y-2">
                 <Label htmlFor="email">E-mail</Label>
-                <Input
+                <input
                   id="email"
                   name="email"
                   type="text"
                   inputMode="email"
                   autoComplete="username email"
-                  className="h-12 rounded-xl"
-                  aria-invalid={!!errors.email}
+                  required={false}
+                  aria-required={false}
+                  aria-invalid={errors.email ? true : undefined}
+                  className={cn(loginInputClass, errors.email && "border-destructive")}
                   defaultValue=""
                 />
                 {errors.email ? (
@@ -93,13 +98,15 @@ function LoginFormInner() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="password">Senha</Label>
-                <Input
+                <input
                   id="password"
                   name="password"
                   type="password"
                   autoComplete="current-password"
-                  className="h-12 rounded-xl"
-                  aria-invalid={!!errors.password}
+                  required={false}
+                  aria-required={false}
+                  aria-invalid={errors.password ? true : undefined}
+                  className={cn(loginInputClass, errors.password && "border-destructive")}
                   defaultValue=""
                 />
                 {errors.password ? (
@@ -123,6 +130,7 @@ function LoginFormInner() {
         </Card>
         <p className="text-center text-xs text-muted-foreground">
           Uso interno Horyzonn · Operação em MySQL + Prisma
+          <span className="mt-1 block opacity-70">Login v2 (inputs nativos) — se não vês isto, o site ainda está em cache</span>
         </p>
       </div>
     </div>
