@@ -1,4 +1,5 @@
 import type { LucideIcon } from "lucide-react";
+import type { UserRole } from "@prisma/client";
 import {
   CalendarDays,
   ClipboardCheck,
@@ -12,6 +13,7 @@ import {
   UserSquare2,
   ClipboardList,
   Sparkles,
+  Users,
 } from "lucide-react";
 
 export type NavItem = {
@@ -19,6 +21,8 @@ export type NavItem = {
   label: string;
   icon: LucideIcon;
   mobile?: boolean;
+  /** Visível apenas com um destes papéis (omitir = todos). */
+  requireAnyRole?: readonly UserRole[];
 };
 
 export const mainNav: NavItem[] = [
@@ -33,6 +37,12 @@ export const mainNav: NavItem[] = [
   { href: "/goals", label: "Metas", icon: Goal },
   { href: "/library", label: "Biblioteca", icon: Library },
   { href: "/reports", label: "Relatórios", icon: PieChart },
+  {
+    href: "/admin/usuarios",
+    label: "Equipe · Utilizadores",
+    icon: Users,
+    requireAnyRole: ["ADMIN"],
+  },
   { href: "/settings", label: "Ajustes", icon: Settings2 },
 ];
 

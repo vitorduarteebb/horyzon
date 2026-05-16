@@ -59,8 +59,16 @@ export function AppShell({
             </Sheet>
 
             <div className="min-w-0 flex-1">
-              <p className="text-xs uppercase tracking-wide text-muted-foreground">Horyzonn OS</p>
+              <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">HORYZON</p>
               <HeaderTitle />
+              <Link
+                href="https://horyzonn.com.br"
+                className="mt-1 inline-block text-[11px] text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
+                target="_blank"
+                rel="noreferrer noopener"
+              >
+                Site institucional →
+              </Link>
             </div>
 
             <DropdownMenu>

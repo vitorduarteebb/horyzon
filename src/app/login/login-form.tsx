@@ -4,6 +4,7 @@ import { useRef, useState } from "react";
 import { signIn } from "next-auth/react";
 import { useSearchParams } from "next/navigation";
 
+import { HoryzonLogo } from "@/components/brand/horyzon-logo";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { loginSchema } from "@/lib/schemas";
@@ -91,12 +92,22 @@ export function LoginForm() {
   return (
     <div className="min-h-dvh flex items-center justify-center bg-[var(--hz-app-bg)] px-4 py-10">
       <div className="w-full max-w-md space-y-8">
-        <div className="text-center space-y-2">
-          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-primary text-primary-foreground text-lg font-black">
-            HZ
+        <div className="space-y-4 text-center">
+          <HoryzonLogo variant="wordmark" />
+          <div className="space-y-1">
+            <h1 className="text-3xl font-bold tracking-tight">Horyzon OS interno</h1>
+            <p className="text-sm text-muted-foreground">
+              Área restrita ·{" "}
+              <a
+                href="https://horyzonn.com.br"
+                className="font-medium underline-offset-4 hover:text-foreground hover:underline"
+                target="_blank"
+                rel="noreferrer noopener"
+              >
+                horyzonn.com.br
+              </a>
+            </p>
           </div>
-          <h1 className="text-3xl font-bold tracking-tight">Horyzonn OS</h1>
-          <p className="text-sm text-muted-foreground">Entre com o e-mail corporativo</p>
         </div>
 
         <Card className="rounded-3xl border-2 shadow-lg">
@@ -159,11 +170,10 @@ export function LoginForm() {
           </CardContent>
         </Card>
         <p className="text-center text-xs text-muted-foreground">
-          Uso interno Horyzonn · Teste BD:{" "}
-          <a className="underline text-primary" href="/api/health">
+          Uso interno · diagnóstico:{" "}
+          <a className="underline underline-offset-2 hover:text-foreground" href="/api/health">
             /api/health
           </a>
-          <span className="mt-1 block opacity-70">Login v5 · form sem validação HTML (noValidate)</span>
         </p>
       </div>
     </div>

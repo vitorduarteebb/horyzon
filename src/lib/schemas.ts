@@ -113,3 +113,15 @@ export const userSettingsSchema = z.object({
 });
 
 export const roleEnum = z.nativeEnum(UserRole);
+
+/** Criação de utilizador pelo painel admin. */
+export const adminCreateUserSchema = z.object({
+  name: z.string().min(1, "Nome obrigatório").max(120),
+  email: z
+    .string()
+    .min(1)
+    .email("E-mail inválido")
+    .transform((s) => s.trim().toLowerCase()),
+  password: z.string().min(8, "Mínimo 8 caracteres").max(200),
+  role: z.nativeEnum(UserRole),
+});

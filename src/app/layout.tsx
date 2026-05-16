@@ -37,14 +37,14 @@ export const metadata: Metadata = {
 };
 
 export const viewport = {
-  themeColor: "#0f766e",
+  themeColor: "#0a0a0a",
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="pt-BR" suppressHydrationWarning>
       <body className={cn("min-h-dvh antialiased", sans.variable)}>
-        <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false}>
+        <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>
           {children}
           <Toaster richColors position="top-center" />
         </ThemeProvider>
